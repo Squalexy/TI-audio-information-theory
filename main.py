@@ -4,7 +4,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 
-def histograma(filename):
+#def histograma(filename):
 
 
 def main():
@@ -19,4 +19,4 @@ def main():
             data = data.split('\n')
 
 if __name__ == "__main__":
-    
+    main()
