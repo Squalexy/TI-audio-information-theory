@@ -11,8 +11,8 @@ def histograma(data):
     # print(data.shape)
     # print(len(data))
 
-    if np.char.isalpha(data[0]):
-        alfabeto = list(string.ascii_uppercase) + list(string.ascii_lowercase)  # 26 + 26, min e maiusc
+    if data[0].isalpha():
+        alfabeto =  list(string.ascii_uppercase) + list(string.ascii_lowercase)  # 26 + 26, min e maiusc
         ocorrencias = np.zeros(len(alfabeto))
         for caracter in data:
             print(ord(caracter))
@@ -39,14 +39,16 @@ def histograma(data):
         for element in data_copy:
             ocorrencias[element] += 1
 
+
     print(ocorrencias)
     plt.bar(alfabeto, ocorrencias)
     plt.show()
 
 
+
 def main():
     # filename = input("Nome do ficheiro : ")
-    filename = "texto.txt"
+    filename = "lena.bmp"
 
     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
         data = mpimg.imread(filename)
@@ -58,6 +60,7 @@ def main():
         with open(filename) as f:
             data = list(f.read())
 
+    # print(ord(data[0]))
     histograma(data)
 
 
