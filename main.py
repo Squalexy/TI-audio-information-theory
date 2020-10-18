@@ -4,29 +4,41 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import scipy.io.wavfile as spiowf
 
+'''
+FUNÇÃO para criar alfabeto e nº de ocorrências de ficheiros audio e imagem
+O nº de ocorrências é obtido através da data e do seu alfabeto
+Através do dtype obtemos o tamanho necessário para criar o array onde guardamos o nº de ocorrências
+A função mostra o histograma da data recebida e retorna o nº de ocorrências a ser usado na função da entropia
+'''
 
-#
+
 def img_audio(data):
-    data_copy = data.flatten()  # Convertemos num array unidimensional
+    data_copy = data.flatten()
 
-    tipo = str(data_copy.dtype)  # Convertemos dtype para string
+    tipo = str(data_copy.dtype)
     string_numero = ''
-    # Verifica o tipo de dados com dtype e extrai apenas o(s) digito(s) correspondente(s) aos bits
     for elemento in tipo:
         if elemento.isdigit():
             string_numero += elemento
-    data_type = int(string_numero)  # Converte para inteiro a string correspondente aos bits
+    data_type = int(string_numero)
 
-    alfabeto = np.arange(0, pow(2, data_type))   # Criamos um array do alfabeto que vai de 0 a 2^data_type
-    ocorrencias = np.zeros(len(alfabeto))  # Criamos um array com o numero de ocorrencias de cada elemento do alfabeto
+    alfabeto = np.arange(0, pow(2, data_type))
+    ocorrencias = np.zeros(len(alfabeto))
 
-    #
     for element in data_copy:
         ocorrencias[element] += 1
 
     histograma(alfabeto, ocorrencias)
 
     return ocorrencias
+
+
+'''
+FUNÇÃO para criar alfabeto e nº de ocorrências de ficheiros texto
+O alfabeto que criamos tem os caracteres "A" a "Z" + "a" a "z" (52 caracteres no total)
+O nº de ocorrências é obtido através da data e do seu alfabeto
+A função mostra o histograma da data recebida e retorna o nº de ocorrências a ser usado na função da entropia
+'''
 
 
 def texto(data):
@@ -49,12 +61,18 @@ def texto(data):
     return ocorrencias
 
 
+'''FUNÇÃO que cria um histograma consoante o alfabeto recebido e o nº de ocorrências de cada símbolo do alfabeto'''
+
+
 def histograma(alfabeto, ocorrencias):
     plt.bar(alfabeto, ocorrencias)
     plt.show()
 
 
-def entropia(ocorrencias):
+'''FUNÇÃO para calcular a entropia de determinada data, através do nº de ocorrências do alfabeto dessa data'''
+
+
+def calc_entropia(ocorrencias):
     entropia = 0
     probabilidade = np.zeros(len(ocorrencias))
 
@@ -68,18 +86,20 @@ def entropia(ocorrencias):
 
 
 def main(filename):
-    # Verifica se é um ficheiro imagem
-    if filename.lower().endswith('.bmp'):  # Extensões correspondentes a imagem
+    # Condições para verificar extensão do ficheiro, afim de chamar a função correspondente
+
+    # Condição para imagens
+    if filename.lower().endswith('.bmp'):
         data = mpimg.imread(filename)
 
-        # Se for uma imagem com 3 dimensões(a cores), usamos apenas o channel vermelho
+        # Se for uma imagem com 3 dimensões(a cores), usamos apenas o canal vermelho
         if data.ndim == 3:
             ocorrencias = img_audio(data[:, :, 0])
 
         else:
             ocorrencias = img_audio(data)
 
-    # Verifica se é um ficheiro áudio
+    # Condição para audios
     elif filename.lower().endswith(('.wav', '.mp3')):
         [sampleRate, data] = spiowf.read(filename)
 
@@ -89,16 +109,14 @@ def main(filename):
         else:
             ocorrencias = img_audio(data)
 
-    # Verifica se é um ficheiro texto
+    # Condição para textos
     elif filename.lower().endswith('.txt'):
         with open(filename) as f:
-            # Convertemos uma matriz de linhas para um array unidimensional só com chars
             data = np.asarray(list(f.read()))
 
         ocorrencias = texto(data)
 
-    # Imprime entropia - limite mínimo teórico para o número médio de bits por símbolo
-    print(f"Entropia: {entropia(ocorrencias)}")
+    print(f"Entropia: {calc_entropia(ocorrencias)}")
 
 
 if __name__ == "__main__":
