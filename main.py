@@ -31,7 +31,7 @@ def img_audio(data):
 
     histograma(alfabeto, ocorrencias)
 
-    return ocorrencias, alfabeto
+    return ocorrencias, alfabeto, data_copy
 
 
 '''
@@ -87,6 +87,18 @@ def calc_entropia(ocorrencias):
 
 
 def media_ponderada(alfabeto, data, flag, probabilidade):
+
+    """
+    Retirar caracteres e elementos desnecessários que não façam parte do alfabeto
+    """
+
+    if flag == 1:
+        data_copy = []
+        for i in range(len(data)):
+            if data[i] in alfabeto:
+                data_copy += data[i]
+        data = np.array(data_copy)
+
     codec = HuffmanCodec.from_data(data)
     t = codec.get_code_table()
 
@@ -103,21 +115,26 @@ def media_ponderada(alfabeto, data, flag, probabilidade):
     print(t)
     print(s)
     print(l)
+    print(probabilidade)
 
-    """
-    calc_media_sum = np.sum(probabilidade * l)
-    print(f"NP SUM: {calc_media_sum}")
-    """
+    print(len(s))
+    print(len(l))
+    print(len(probabilidade))
+
+
+    #calc_media_sum = np.sum(probabilidade * l)
+    #print(f"NP SUM: {calc_media_sum}")
 
     calc_media_ponderada = np.average(l, axis=None, weights=probabilidade)
+
     print(f"Média ponderada: {calc_media_ponderada}")
 
     return calc_media_ponderada, l
 
 
 def variancia_ponderada(probabilidade, calc_media_ponderada, l):
-    calc_variancia_ponderada = sum(probabilidade * ((l * probabilidade) - calc_media_ponderada) ** 2) / sum(
-        probabilidade)
+    calc_media_ponderada_quadrado = np.average(l ** 2, axis=None, weights=probabilidade)
+    calc_variancia_ponderada = calc_media_ponderada_quadrado - calc_media_ponderada ** 2
     print(f"Variância ponderada: {calc_variancia_ponderada}")
 
 
@@ -132,10 +149,10 @@ def main(filename):
 
         # Se for uma imagem com 3 dimensões(a cores), usamos apenas o canal vermelho
         if data.ndim == 3:
-            ocorrencias, alfabeto = img_audio(data[:, :, 0])
+            ocorrencias, alfabeto, data = img_audio(data[:, :, 0])
 
         else:
-            ocorrencias, alfabeto = img_audio(data)
+            ocorrencias, alfabeto, data = img_audio(data)
 
     # Condição para audios
     elif filename.lower().endswith(('.wav', '.mp3')):
@@ -143,9 +160,9 @@ def main(filename):
 
         # Se for um audio stereo usamos apenas o canal esquerdo
         if data.ndim == 2:
-            ocorrencias, alfabeto = img_audio(data[:, 0])
+            ocorrencias, alfabeto, data = img_audio(data[:, 0])
         else:
-            ocorrencias, alfabeto = img_audio(data)
+            ocorrencias, alfabeto, data = img_audio(data)
 
     # Condição para textos
     elif filename.lower().endswith('.txt'):
