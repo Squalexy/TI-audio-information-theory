@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import scipy.io.wavfile as spiowf
+from huffmancodec import HuffmanCodec
 
 '''
 FUNÇÃO para criar alfabeto e nº de ocorrências de ficheiros audio e imagem
@@ -22,7 +23,7 @@ def img_audio(data):
             string_numero += elemento
     data_type = int(string_numero)
 
-    alfabeto = np.arange(0, pow(2, data_type))
+    alfabeto = np.arange(0, 2 ** data_type)
     ocorrencias = np.zeros(len(alfabeto))
 
     for element in data_copy:
@@ -30,7 +31,7 @@ def img_audio(data):
 
     histograma(alfabeto, ocorrencias)
 
-    return ocorrencias
+    return ocorrencias, alfabeto
 
 
 '''
@@ -58,7 +59,7 @@ def texto(data):
 
     histograma(alfabeto, ocorrencias)
 
-    return ocorrencias
+    return ocorrencias, alfabeto
 
 
 '''FUNÇÃO que cria um histograma consoante o alfabeto recebido e o nº de ocorrências de cada símbolo do alfabeto'''
@@ -73,20 +74,57 @@ def histograma(alfabeto, ocorrencias):
 
 
 def calc_entropia(ocorrencias):
-    entropia = 0
     probabilidade = np.zeros(len(ocorrencias))
 
     for i in range(len(ocorrencias)):
         probabilidade[i] = ocorrencias[i] / sum(ocorrencias)
 
-        if probabilidade[i] != 0:
-            entropia += (probabilidade[i] * np.log2(probabilidade[i]))
+    mask = np.isin(probabilidade, 0, invert=True)
+    probabilidade = probabilidade[mask]
+    entropia = np.sum(probabilidade * np.log2(probabilidade))
 
-    return -entropia
+    return -entropia, probabilidade
+
+
+def media_ponderada(alfabeto, data, flag, probabilidade):
+    codec = HuffmanCodec.from_data(data)
+    t = codec.get_code_table()
+
+    """
+    Os elementos que não ocorrem já foram retirados com o HuffmanCodec
+    """
+
+    if flag == 1:
+        delete = [key for key in t if key not in alfabeto]
+        for key in delete:
+            del t[key]
+
+    s, l = codec.get_code_len()
+    print(t)
+    print(s)
+    print(l)
+
+    """
+    calc_media_sum = np.sum(probabilidade * l)
+    print(f"NP SUM: {calc_media_sum}")
+    """
+
+    calc_media_ponderada = np.average(l, axis=None, weights=probabilidade)
+    print(f"Média ponderada: {calc_media_ponderada}")
+
+    return calc_media_ponderada, l
+
+
+def variancia_ponderada(probabilidade, calc_media_ponderada, l):
+    calc_variancia_ponderada = sum(probabilidade * ((l * probabilidade) - calc_media_ponderada) ** 2) / sum(
+        probabilidade)
+    print(f"Variância ponderada: {calc_variancia_ponderada}")
 
 
 def main(filename):
     # Condições para verificar extensão do ficheiro, afim de chamar a função correspondente
+
+    flag = 0  # Condição para a função média_ponderada, dependendo se for txt ou img/audio
 
     # Condição para imagens
     if filename.lower().endswith('.bmp'):
@@ -94,10 +132,10 @@ def main(filename):
 
         # Se for uma imagem com 3 dimensões(a cores), usamos apenas o canal vermelho
         if data.ndim == 3:
-            ocorrencias = img_audio(data[:, :, 0])
+            ocorrencias, alfabeto = img_audio(data[:, :, 0])
 
         else:
-            ocorrencias = img_audio(data)
+            ocorrencias, alfabeto = img_audio(data)
 
     # Condição para audios
     elif filename.lower().endswith(('.wav', '.mp3')):
@@ -105,28 +143,32 @@ def main(filename):
 
         # Se for um audio stereo usamos apenas o canal esquerdo
         if data.ndim == 2:
-            ocorrencias = img_audio(data[:, 0])
+            ocorrencias, alfabeto = img_audio(data[:, 0])
         else:
-            ocorrencias = img_audio(data)
+            ocorrencias, alfabeto = img_audio(data)
 
     # Condição para textos
     elif filename.lower().endswith('.txt'):
         with open(filename) as f:
             data = np.asarray(list(f.read()))
+        flag = 1
+        ocorrencias, alfabeto = texto(data)
 
-        ocorrencias = texto(data)
+    entropia, probabilidade = calc_entropia(ocorrencias)
 
-    print(f"Entropia: {calc_entropia(ocorrencias)}")
+    print(f"Entropia: {entropia}")  # resultado[0] = ocorrências
+    calc_media_ponderada, length = media_ponderada(alfabeto, data, flag, probabilidade)
+    variancia_ponderada(probabilidade, calc_media_ponderada, length)
 
 
 if __name__ == "__main__":
     # -----IMAGENS-----
-    main("lena.bmp")
+    # main("lena.bmp")
     # main("binaria.bmp")
     # main("ct1.bmp")
 
     # -----TEXTO-----
-    # main("texto.txt")
+    main("texto.txt")
 
     # -----AUDIO-----
     # main("saxriff.wav")
