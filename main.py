@@ -13,6 +13,16 @@ A função mostra o histograma da data recebida e retorna o nº de ocorrências 
 '''
 
 
+def retirar_texto(data):
+    alfabeto = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+    data_copy = []
+    for i in range(len(data)):
+        if data[i] in alfabeto:
+            data_copy += data[i]
+    data = np.array(data_copy)
+    return data, alfabeto
+
+
 def img_audio(data):
     data_copy = data.flatten()
 
@@ -42,8 +52,7 @@ A função mostra o histograma da data recebida e retorna o nº de ocorrências 
 '''
 
 
-def texto(data):
-    alfabeto = list(string.ascii_uppercase) + list(string.ascii_lowercase)  # 26 + 26, min e maiusc
+def texto(data, alfabeto):
     ocorrencias = np.zeros(len(alfabeto))
 
     for caracter in data:
@@ -86,18 +95,10 @@ def calc_entropia(ocorrencias):
     return -entropia, probabilidade
 
 
-def media_ponderada(alfabeto, data, flag, probabilidade):
-
+def media_ponderada(data, probabilidade):
     """
     Retirar caracteres e elementos desnecessários que não façam parte do alfabeto
     """
-
-    if flag == 1:
-        data_copy = []
-        for i in range(len(data)):
-            if data[i] in alfabeto:
-                data_copy += data[i]
-        data = np.array(data_copy)
 
     codec = HuffmanCodec.from_data(data)
     t = codec.get_code_table()
@@ -106,24 +107,7 @@ def media_ponderada(alfabeto, data, flag, probabilidade):
     Os elementos que não ocorrem já foram retirados com o HuffmanCodec
     """
 
-    if flag == 1:
-        delete = [key for key in t if key not in alfabeto]
-        for key in delete:
-            del t[key]
-
     s, l = codec.get_code_len()
-    print(t)
-    print(s)
-    print(l)
-    print(probabilidade)
-
-    print(len(s))
-    print(len(l))
-    print(len(probabilidade))
-
-
-    #calc_media_sum = np.sum(probabilidade * l)
-    #print(f"NP SUM: {calc_media_sum}")
 
     calc_media_ponderada = np.average(l, axis=None, weights=probabilidade)
 
@@ -133,9 +117,24 @@ def media_ponderada(alfabeto, data, flag, probabilidade):
 
 
 def variancia_ponderada(probabilidade, calc_media_ponderada, l):
-    calc_media_ponderada_quadrado = np.average(l ** 2, axis=None, weights=probabilidade)
+    for i in range(len(l)):
+        l[i] = l[i] ** 2
+    calc_media_ponderada_quadrado = np.average(l, axis=None, weights=probabilidade)
     calc_variancia_ponderada = calc_media_ponderada_quadrado - calc_media_ponderada ** 2
     print(f"Variância ponderada: {calc_variancia_ponderada}")
+
+
+def agrupar_simbolos(data, alfabeto):
+    print(data)
+    print(len(data))
+
+    nova_data = []
+    for i in range(0, len(data), 2):
+        if i == len(data) - 1 and len(data) % 2 != 0:
+            break
+        else:
+            nova_data.append((data[i], data[i + 1]))
+    print(nova_data)
 
 
 def main(filename):
@@ -168,14 +167,16 @@ def main(filename):
     elif filename.lower().endswith('.txt'):
         with open(filename) as f:
             data = np.asarray(list(f.read()))
-        flag = 1
-        ocorrencias, alfabeto = texto(data)
+        data, alfabeto = retirar_texto(data)
+        ocorrencias, alfabeto = texto(data, alfabeto)
 
     entropia, probabilidade = calc_entropia(ocorrencias)
-
     print(f"Entropia: {entropia}")  # resultado[0] = ocorrências
-    calc_media_ponderada, length = media_ponderada(alfabeto, data, flag, probabilidade)
+
+    calc_media_ponderada, length = media_ponderada(data, probabilidade)
     variancia_ponderada(probabilidade, calc_media_ponderada, length)
+
+    agrupar_simbolos(data, alfabeto)
 
 
 if __name__ == "__main__":
