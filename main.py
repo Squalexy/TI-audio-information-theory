@@ -137,6 +137,7 @@ def variancia_ponderada(probabilidade, calc_media_ponderada, l):
     calc_variancia_ponderada = calc_media_ponderada_quadrado - calc_media_ponderada ** 2
     print(f"Variância ponderada: {calc_variancia_ponderada}")
 
+""""""
 
 def main(filename):
     # Condições para verificar extensão do ficheiro, afim de chamar a função correspondente
